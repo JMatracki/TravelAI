@@ -1,0 +1,15 @@
+echo "🚀 Running pre-push checks..."
+
+# Type check entire project
+echo "📝 Type checking..."
+npm run type-check
+
+# Run full test suite
+echo "🧪 Running full test suite..."
+npm test -- --run
+
+# Build check
+echo "🏗️ Build check..."
+npm run build
+
+echo "✅ Pre-push checks passed! Ready to push."

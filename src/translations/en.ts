@@ -1,0 +1,60 @@
+export const en = {
+  hero: {
+    title: "Plan Your Perfect Journey with AI",
+    subtitle:
+      "Create personalized travel itineraries in seconds using artificial intelligence",
+    cta: "Start Planning",
+  },
+  form: {
+    title: "Where do you want to go?",
+    destination: "Destination",
+    destinationPlaceholder: "e.g., Paris, Tokyo, New York",
+    days: "Number of Days",
+    activities: "Preferred Activities",
+    activitiesPlaceholder: "e.g., museums, hiking, food tours, beaches...",
+    generate: "Generate Itinerary",
+    generating: "Generating your itinerary...",
+  },
+  results: {
+    title: "Travel Plan",
+    duration: "Duration",
+    days: "days",
+    estimatedCost: "Estimated Cost",
+    perPerson: "per person",
+    unknownPlace: "Unknown Place",
+    save: "Save Itinerary",
+    saved: "Saved!",
+    export: "Export to PDF",
+    photos: "Destination Photos",
+  },
+  saved: {
+    title: "Saved Itineraries",
+    empty: "No saved itineraries yet",
+    delete: "Delete",
+    clear: "Clear All",
+    days: "days",
+  },
+  nav: {
+    theme: "Toggle theme",
+    language: "Change language",
+  },
+  footer: {
+    made: "Made with",
+    by: "by",
+    powered: "AI-Powered",
+    openSource: "Open Source",
+  },
+  toasts: {
+    generating: "Generating your itinerary...",
+    success: "Itinerary generated successfully!",
+    error:
+      "Failed to generate itinerary. Please check your input and try again.",
+    saved: "All saved itineraries have been removed",
+    pdfSuccess: "Itinerary exported to PDF successfully",
+    pdfError: "Failed to export PDF. Please try again.",
+    saveSuccess: "Your itinerary has been saved successfully",
+    saveError: "Failed to save itinerary. Please try again.",
+    deleteError: "Failed to delete itinerary. Please try again.",
+    clearError: "Failed to clear itineraries. Please try again.",
+  },
+} as const;
