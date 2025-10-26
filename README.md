@@ -8,7 +8,7 @@
 
 **Inteligentny generator planów podróży napędzany sztuczną inteligencją**
 
-[🚀 Demo](#-demo) • [📚 Dokumentacja](#-features) • [🛠️ Instalacja](#-installation--setup) • [🤝 Współpraca](#-contributing)
+[🚀 Demo](#-demo) • [📚 Dokumentacja](#-główne-funkcje) • [🛠️ Instalacja](#-quick-start) • [🤝 Współpraca](#-contributing)
 
 ## ✨ Czym jest AI Travel Planner?
 
@@ -55,8 +55,8 @@ _Aplikacja w akcji: generowanie spersonalizowanego planu podróży dla Paryża z
 - **Sklonuj repozytorium**
 
   ```bash
-  git clone https://github.com/jmatracki/AI-Travel-Itinerary-Planner.git
-  cd AI-Travel-Itinerary-Planner
+  git clone https://github.com/JMatracki/TravelAI.git
+  cd TravelAI
   ```
 
 - **Zainstaluj wszystkie zależności**
