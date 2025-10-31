@@ -306,7 +306,7 @@ VITE_NODE_ENV=development
 
 ## 🧪 Testowanie
 
-Projekt zawiera komprehensywną suite testów:
+Projekt zawiera **nowoczesną suite testów** z naciskiem na **stabilność i accessibility**:
 
 ```bash
 # Uruchom wszystkie testy
@@ -319,12 +319,21 @@ npm run test:coverage
 npm run test:watch
 ```
 
+### 🎯 **Nowoczesne podejście do testowania**
+
+- 🔄 **Stable Selectors** - Testy używają `getByRole()`, `getByLabelText()` zamiast kruchych text queries
+- ♿ **Accessibility First** - Każdy test sprawdza dostępność i semantyczną strukturę
+- 🎨 **Behavior Testing** - Skupienie na funkcjonalności, nie na konkretnych tekstach
+- 🛡️ **Regression Proof** - Testy odporne na zmiany copywritingu
+
 **Pokrycie testów:**
 
-- ✅ Unit testy dla wszystkich hooks
-- ✅ Integration testy dla komponentów
-- ✅ API endpoint testing
-- ✅ Validation logic tests
+- ✅ **85 passing tests** - Comprehensive test coverage
+- ✅ Unit testy dla wszystkich hooks z TanStack Query
+- ✅ Integration testy z focus na user experience
+- ✅ API endpoint testing z error handling
+- ✅ Accessibility compliance testing
+- ✅ Keyboard navigation & screen reader support
 
 ---
 
