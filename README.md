@@ -8,7 +8,7 @@
 
 **Inteligentny generator planów podróży napędzany sztuczną inteligencją**
 
-[🚀 Demo](#-demo) • [📚 Dokumentacja](#-główne-funkcje) • [🛠️ Instalacja](#-quick-start) • [🤝 Współpraca](#-contributing)
+[🚀 Demo](#-demo) • [🛠️ Instalacja](#-quick-start) • [🤝 Współpraca](#-contributing)
 
 ## ✨ Czym jest AI Travel Planner?
 

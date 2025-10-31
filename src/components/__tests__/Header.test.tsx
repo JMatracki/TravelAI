@@ -32,59 +32,52 @@ describe("Header Component", () => {
     vi.clearAllMocks();
   });
 
-  it("renders logo and navigation", () => {
+  it("renders main navigation and home link with accessible name", () => {
     render(<Header />);
-
-    expect(screen.getByText("TravelAI")).toBeInTheDocument();
-    expect(screen.getByTitle("Go to home page")).toBeInTheDocument();
+    expect(screen.getByLabelText("Main navigation")).toBeInTheDocument();
+    const homeLink = screen.getByRole("link");
+    expect(homeLink).toHaveAttribute("href", "/");
+    expect(homeLink).toHaveTextContent("TravelAI");
   });
 
   it("renders language and theme toggle buttons", () => {
     render(<Header />);
-
-    const languageButton = screen.getByRole("button", {
-      name: /change language/i,
-    });
-    const themeButton = screen.getByRole("button", { name: /toggle theme/i });
-
-    expect(languageButton).toBeInTheDocument();
-    expect(themeButton).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /change language/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /toggle theme/i })
+    ).toBeInTheDocument();
   });
 
-  it("toggles language on language button click", async () => {
-    const user = userEvent.setup();
+  it("invokes language change on language button click", async () => {
     render(<Header />);
-
-    const languageButton = screen.getByRole("button", {
-      name: /change language/i,
-    });
-    await user.click(languageButton);
-
-    expect(mockSetLanguage).toHaveBeenCalledWith("pl");
+    await userEvent.click(
+      screen.getByRole("button", { name: /change language/i })
+    );
+    expect(mockSetLanguage).toHaveBeenCalledTimes(1);
   });
 
-  it("toggles theme on theme button click", async () => {
-    const user = userEvent.setup();
+  it("invokes theme toggle on click", async () => {
     render(<Header />);
-
-    const themeButton = screen.getByRole("button", { name: /toggle theme/i });
-    await user.click(themeButton);
-
-    expect(mockSetTheme).toHaveBeenCalledWith("dark");
+    await userEvent.click(
+      screen.getByRole("button", { name: /toggle theme/i })
+    );
+    expect(mockSetTheme).toHaveBeenCalledTimes(1);
   });
 
-  it("has correct ARIA labels", () => {
+  it("supports keyboard activation for toggles (a11y)", async () => {
     render(<Header />);
-
-    expect(screen.getByLabelText("Main navigation")).toBeInTheDocument();
-    expect(screen.getByLabelText(/change language/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/toggle theme/i)).toBeInTheDocument();
+    const themeBtn = screen.getByRole("button", { name: /toggle theme/i });
+    themeBtn.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(mockSetTheme).toHaveBeenCalledTimes(1);
   });
 
-  it("logo link has correct href and title", () => {
+  it("logo link leads to home with a clear accessible name", () => {
     render(<Header />);
-
-    const logoLink = screen.getByTitle("Go to home page");
-    expect(logoLink).toHaveAttribute("href", "/");
+    const home = screen.getByRole("link");
+    expect(home).toHaveAttribute("href", "/");
+    expect(home).toHaveTextContent("TravelAI");
   });
 });

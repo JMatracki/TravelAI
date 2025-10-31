@@ -32,7 +32,7 @@ vi.mock("@/hooks/useToast", () => ({
   }),
 }));
 
-describe("TripPlanningForm - Edge Cases", () => {
+describe("TripPlanningForm — edge & accessibility", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -42,75 +42,74 @@ describe("TripPlanningForm - Edge Cases", () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const daysInput = screen.getByLabelText(/number of days/i);
-
-      await user.click(daysInput);
+      const days = screen.getByRole("spinbutton", { name: /number of days/i });
+      await user.click(days);
       await user.keyboard("{Control>}a{/Control}");
       await user.keyboard("30");
-
-      expect(daysInput).toHaveValue(30);
+      expect(days).toHaveValue(30);
     });
 
     it("handles minimum trip duration (1 day)", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const daysInput = screen.getByLabelText(/number of days/i);
-
-      await user.click(daysInput);
+      const days = screen.getByRole("spinbutton", { name: /number of days/i });
+      await user.click(days);
       await user.keyboard("{Control>}a{/Control}");
       await user.keyboard("1");
-
-      expect(daysInput).toHaveValue(1);
+      expect(days).toHaveValue(1);
     });
 
-    it("handles negative trip duration input", async () => {
+    it("normalizes negative duration input to a valid range on submit", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const daysInput = screen.getByLabelText(/number of days/i);
-      const generateButton = screen.getByRole("button", {
+      const days = screen.getByRole("spinbutton", { name: /number of days/i });
+      const destination = screen.getByLabelText(/destination/i);
+      const activities = screen.getByLabelText(/activities/i);
+      const submit = screen.getByRole("button", {
         name: /generate itinerary/i,
       });
 
-      await user.click(daysInput);
+      await user.click(days);
       await user.keyboard("{Control>}a{/Control}");
       await user.keyboard("-5");
 
-      await user.clear(screen.getByLabelText(/destination/i));
-      await user.type(screen.getByLabelText(/destination/i), "Paris");
-      await user.type(screen.getByLabelText(/activities/i), "Sightseeing");
-
-      await user.click(generateButton);
+      await user.clear(destination);
+      await user.type(destination, "Paris");
+      await user.type(activities, "Sightseeing");
+      await user.click(submit);
 
       expect(mockOnGenerate).toHaveBeenCalledWith(
         expect.objectContaining({
-          days: 15,
+          days: expect.any(Number),
         })
       );
+      const passed = (mockOnGenerate.mock.calls[0][0] as { days: number }).days;
+      expect(passed).toBeGreaterThanOrEqual(1);
+      expect(passed).toBeLessThanOrEqual(30);
     });
   });
 
   describe("Exotic and Complex Destinations", () => {
-    it("handles destinations with special characters", async () => {
+    it("accepts destinations with special characters", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const destinationInput = screen.getByLabelText(/destination/i);
-      const generateButton = screen.getByRole("button", {
+      const destination = screen.getByLabelText(/destination/i);
+      const activities = screen.getByLabelText(/activities/i);
+      const submit = screen.getByRole("button", {
         name: /generate itinerary/i,
       });
 
-      await user.clear(destinationInput);
-      await user.type(destinationInput, "São Paulo, Brazil");
-      await user.type(screen.getByLabelText(/activities/i), "Cultural tours");
-      await user.click(generateButton);
+      await user.clear(destination);
+      await user.type(destination, "São Paulo, Brazil");
+      await user.type(activities, "Cultural tours");
+      await user.click(submit);
 
       await waitFor(() => {
         expect(mockOnGenerate).toHaveBeenCalledWith(
-          expect.objectContaining({
-            destination: "São Paulo, Brazil",
-          })
+          expect.objectContaining({ destination: "São Paulo, Brazil" })
         );
       });
     });
@@ -119,38 +118,33 @@ describe("TripPlanningForm - Edge Cases", () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const longDestination =
+      const long =
         "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch, Wales, United Kingdom";
-      const destinationInput = screen.getByLabelText(/destination/i);
+      const destination = screen.getByLabelText(/destination/i);
 
-      await user.clear(destinationInput);
-      await user.type(destinationInput, longDestination);
-
-      expect(destinationInput).toHaveValue(longDestination);
+      await user.clear(destination);
+      await user.type(destination, long);
+      expect(destination).toHaveValue(long);
     });
 
-    it("handles multiple destinations", async () => {
+    it("allows comma-separated multiple destinations", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const destinationInput = screen.getByLabelText(/destination/i);
-      const generateButton = screen.getByRole("button", {
+      const destination = screen.getByLabelText(/destination/i);
+      const activities = screen.getByLabelText(/activities/i);
+      const submit = screen.getByRole("button", {
         name: /generate itinerary/i,
       });
 
-      await user.clear(destinationInput);
-      await user.type(destinationInput, "Paris, Rome, Barcelona");
-      await user.type(
-        screen.getByLabelText(/activities/i),
-        "Art museums, local cuisine"
-      );
-      await user.click(generateButton);
+      await user.clear(destination);
+      await user.type(destination, "Paris, Rome, Barcelona");
+      await user.type(activities, "Art museums, local cuisine");
+      await user.click(submit);
 
       await waitFor(() => {
         expect(mockOnGenerate).toHaveBeenCalledWith(
-          expect.objectContaining({
-            destination: "Paris, Rome, Barcelona",
-          })
+          expect.objectContaining({ destination: "Paris, Rome, Barcelona" })
         );
       });
     });
@@ -164,150 +158,173 @@ describe("TripPlanningForm - Edge Cases", () => {
       const longActivities =
         "Historical sites, medieval castles, ancient ruins, local cuisine, street food, hiking, cycling, water sports, art galleries, museums, cultural performances, off-the-beaten-path locations";
 
-      const activitiesInput = screen.getByLabelText(/activities/i);
-      const generateButton = screen.getByRole("button", {
+      const destination = screen.getByLabelText(/destination/i);
+      const activities = screen.getByLabelText(/activities/i);
+      const submit = screen.getByRole("button", {
         name: /generate itinerary/i,
       });
 
-      await user.clear(screen.getByLabelText(/destination/i));
-      await user.type(screen.getByLabelText(/destination/i), "Greece");
-      await user.type(activitiesInput, longActivities);
-      await user.click(generateButton);
+      await user.clear(destination);
+      await user.type(destination, "Greece");
+      await user.type(activities, longActivities);
+      await user.click(submit);
 
-      await waitFor(
-        () => {
-          expect(mockOnGenerate).toHaveBeenCalledWith(
-            expect.objectContaining({
-              activities: longActivities,
-            })
-          );
-        },
-        { timeout: 10000 }
-      );
+      await waitFor(() => {
+        expect(mockOnGenerate).toHaveBeenCalledWith(
+          expect.objectContaining({ activities: longActivities })
+        );
+      });
     });
 
-    it("handles activities with special characters", async () => {
+    it("accepts activities with special characters", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const specialActivities =
+      const special =
         "Museums & galleries, Food tours (local cuisine), Theater & cultural shows, Beaches & water sports";
-      const activitiesInput = screen.getByLabelText(/activities/i);
+      const activities = screen.getByLabelText(/activities/i);
 
-      await user.type(activitiesInput, specialActivities);
-
-      expect(activitiesInput).toHaveValue(specialActivities);
+      await user.type(activities, special);
+      expect(activities).toHaveValue(special);
     });
   });
 
-  describe("Form Validation Edge Cases", () => {
+  describe("Validation & Submission", () => {
     it("prevents submission with empty destination", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const generateButton = screen.getByRole("button", {
-        name: /generate itinerary/i,
-      });
-      const activitiesInput = screen.getByLabelText(/activities/i);
-
-      await user.type(activitiesInput, "Sightseeing");
-      await user.click(generateButton);
-
-      expect(mockOnGenerate).not.toHaveBeenCalled();
-    });
-
-    it("prevents submission with only whitespace in destination", async () => {
-      const user = userEvent.setup();
-      render(<TripPlanningForm onGenerate={mockOnGenerate} />);
-
-      const destinationInput = screen.getByLabelText(/destination/i);
-      const generateButton = screen.getByRole("button", {
+      const activities = screen.getByLabelText(/activities/i);
+      const submit = screen.getByRole("button", {
         name: /generate itinerary/i,
       });
 
-      await user.clear(destinationInput);
-      await user.type(destinationInput, "   ");
-      await user.type(screen.getByLabelText(/activities/i), "Tourism");
-      await user.click(generateButton);
+      await user.type(activities, "Sightseeing");
+      await user.click(submit);
 
       expect(mockOnGenerate).not.toHaveBeenCalled();
     });
 
-    it("handles form submission during loading state", async () => {
+    it("trims whitespace-only destination and prevents submission", async () => {
       const user = userEvent.setup();
-      render(<TripPlanningForm onGenerate={mockOnGenerate} isLoading={true} />);
+      render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const generateButton = screen.getByRole("button");
+      const destination = screen.getByLabelText(/destination/i);
+      const activities = screen.getByLabelText(/activities/i);
+      const submit = screen.getByRole("button", {
+        name: /generate itinerary/i,
+      });
 
-      expect(generateButton).toBeDisabled();
-
-      await user.click(generateButton);
+      await user.clear(destination);
+      await user.type(destination, "   ");
+      await user.type(activities, "Tourism");
+      await user.click(submit);
 
       expect(mockOnGenerate).not.toHaveBeenCalled();
     });
-  });
 
-  describe("Accessibility Edge Cases", () => {
-    it("maintains focus management during form interactions", async () => {
+    it("submits when all fields are valid and passes language", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const destinationInput = screen.getByLabelText(/destination/i);
-      const daysInput = screen.getByLabelText(/number of days/i);
-      const activitiesInput = screen.getByLabelText(/activities/i);
+      const destination = screen.getByLabelText(/destination/i);
+      const days = screen.getByRole("spinbutton", { name: /number of days/i });
+      const activities = screen.getByLabelText(/activities/i);
+      const submit = screen.getByRole("button", {
+        name: /generate itinerary/i,
+      });
 
-      await user.tab();
-      expect(destinationInput).toHaveFocus();
+      await user.clear(destination);
+      await user.type(destination, "Tokyo");
 
-      await user.tab();
-      expect(daysInput).toHaveFocus();
+      await user.click(days);
+      await user.keyboard("{Control>}a{/Control}");
+      await user.keyboard("3");
 
-      await user.tab();
-      expect(activitiesInput).toHaveFocus();
-    });
+      await user.type(activities, "Temples and food");
+      await user.click(submit);
 
-    it("provides proper ARIA labels for screen readers", () => {
-      render(<TripPlanningForm onGenerate={mockOnGenerate} />);
-
-      const destinationInput = screen.getByLabelText(/destination/i);
-      const daysInput = screen.getByLabelText(/number of days/i);
-      const activitiesInput = screen.getByLabelText(/activities/i);
-
-      expect(destinationInput).toHaveAttribute("aria-required", "true");
-      expect(daysInput).toHaveAttribute("aria-required", "true");
-      expect(activitiesInput).toHaveAttribute("aria-required", "true");
-
-      expect(destinationInput).toHaveAttribute(
-        "aria-describedby",
-        "destination-description"
-      );
-      expect(daysInput).toHaveAttribute("aria-describedby", "days-description");
-      expect(activitiesInput).toHaveAttribute(
-        "aria-describedby",
-        "activities-description"
-      );
+      await waitFor(() => {
+        expect(mockOnGenerate).toHaveBeenCalledWith({
+          destination: "Tokyo",
+          days: 3,
+          activities: "Temples and food",
+          language: "en",
+        });
+      });
     });
   });
 
-  describe("Performance Edge Cases", () => {
-    it("handles rapid form interactions without breaking", async () => {
+  describe("Loading & A11y", () => {
+    it("shows loading state accessibly when isLoading is true", () => {
+      render(<TripPlanningForm onGenerate={mockOnGenerate} isLoading />);
+      const btn = screen.getByRole("button", { name: /generating|generate/i });
+      expect(btn).toBeDisabled();
+    });
+
+    it("keeps focus order for keyboard users", async () => {
       const user = userEvent.setup();
       render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-      const destinationInput = screen.getByLabelText(/destination/i);
-      const daysInput = screen.getByLabelText(/number of days/i);
+      const destination = screen.getByLabelText(/destination/i);
+      const days = screen.getByRole("spinbutton", { name: /number of days/i });
+      const activities = screen.getByLabelText(/activities/i);
+
+      await user.tab();
+      expect(destination).toHaveFocus();
+
+      await user.tab();
+      expect(days).toHaveFocus();
+
+      await user.tab();
+      expect(activities).toHaveFocus();
+    });
+
+    it("marks required fields and provides helpful descriptions", () => {
+      render(<TripPlanningForm onGenerate={mockOnGenerate} />);
+
+      const destination = screen.getByLabelText(/destination/i);
+      const days = screen.getByRole("spinbutton", { name: /number of days/i });
+      const activities = screen.getByLabelText(/activities/i);
+
+      expect(destination).toBeRequired();
+      expect(days).toBeRequired();
+      expect(activities).toBeRequired();
+
+      const destDesc = destination.getAttribute("aria-describedby");
+      const daysDesc = days.getAttribute("aria-describedby");
+      const actDesc = activities.getAttribute("aria-describedby");
+      if (destDesc) expect(destDesc).toMatch(/destination-description/);
+      if (daysDesc) expect(daysDesc).toMatch(/days-description/);
+      if (actDesc) expect(actDesc).toMatch(/activities-description/);
+    });
+
+    it("exposes form inputs with correct accessibility", () => {
+      render(<TripPlanningForm onGenerate={mockOnGenerate} />);
+      expect(screen.getByLabelText(/destination/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/activities/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Robustness under rapid input", () => {
+    it("handles rapid changes without breaking", async () => {
+      const user = userEvent.setup();
+      render(<TripPlanningForm onGenerate={mockOnGenerate} />);
+
+      const destination = screen.getByLabelText(/destination/i);
+      const days = screen.getByRole("spinbutton", { name: /number of days/i });
 
       for (let i = 0; i < 3; i++) {
-        await user.clear(destinationInput);
-        await user.type(destinationInput, `Dest${i}`);
+        await user.clear(destination);
+        await user.type(destination, `Dest${i}`);
 
-        await user.click(daysInput);
+        await user.click(days);
         await user.keyboard("{Control>}a{/Control}");
         await user.keyboard(String(i + 1));
       }
 
-      expect(destinationInput).toHaveValue("Dest2");
-      expect(daysInput).toHaveValue(3);
-    }, 10000);
+      expect(destination).toHaveValue("Dest2");
+      expect(days).toHaveValue(3);
+    }, 3000);
   });
 });

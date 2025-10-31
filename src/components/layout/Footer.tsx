@@ -26,11 +26,13 @@ export const Footer = () => {
             className="flex items-center gap-2 justify-center sm:justify-normal"
             href="https://github.com/JMatracki"
             target="_blank"
+            rel="noopener noreferrer"
             title="GitHub"
           >
             <img
               className="h-5 w-5"
-              alt="github"
+              alt="GitHub"
+              aria-hidden="true"
               src={theme === "dark" ? githubIconWhite : githubIcon}
             />
             <span className="font-semibold">JMatracki</span>

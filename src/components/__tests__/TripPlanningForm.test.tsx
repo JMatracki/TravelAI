@@ -14,6 +14,7 @@ vi.mock("@/hooks/useLanguage", () => ({
         days: "Number of days",
         activities: "Activities",
         generate: "Generate Itinerary",
+        generating: "Generating...",
         placeholder: {
           destination: "Enter destination",
           activities: "Describe your interests",
@@ -31,70 +32,68 @@ vi.mock("@/hooks/useToast", () => ({
   }),
 }));
 
-describe("TripPlanningForm Component", () => {
+describe("TripPlanningForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders form fields", () => {
+  it("renders all form fields with labels", () => {
     render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
     expect(screen.getByLabelText(/destination/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/number of days/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("spinbutton", { name: /number of days/i })
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/activities/i)).toBeInTheDocument();
   });
 
-  it("renders generate button", () => {
+  it("renders the generate button with accessible name", () => {
     render(<TripPlanningForm onGenerate={mockOnGenerate} />);
-
-    const generateButton = screen.getByRole("button", {
-      name: /generate itinerary/i,
-    });
-    expect(generateButton).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /generate itinerary/i })
+    ).toBeInTheDocument();
   });
 
   it("updates form values on input", async () => {
     const user = userEvent.setup();
     render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-    const destinationInput = screen.getByLabelText(/destination/i);
-    const daysInput = screen.getByLabelText(/number of days/i);
-    const activitiesInput = screen.getByLabelText(/activities/i);
+    const destination = screen.getByLabelText(/destination/i);
+    const days = screen.getByRole("spinbutton", { name: /number of days/i });
+    const activities = screen.getByLabelText(/activities/i);
 
-    await user.clear(destinationInput);
-    await user.type(destinationInput, "Paris");
+    await user.clear(destination);
+    await user.type(destination, "Paris");
 
-    await user.click(daysInput);
+    await user.click(days);
     await user.keyboard("{Control>}a{/Control}");
     await user.keyboard("5");
 
-    await user.type(activitiesInput, "Museums and restaurants");
+    await user.type(activities, "Museums and restaurants");
 
-    expect(destinationInput).toHaveValue("Paris");
-    expect(daysInput).toHaveValue(5);
-    expect(activitiesInput).toHaveValue("Museums and restaurants");
+    expect(destination).toHaveValue("Paris");
+    expect(days).toHaveValue(5);
+    expect(activities).toHaveValue("Museums and restaurants");
   });
 
-  it("calls onGenerate with form data on submit", async () => {
+  it("submits valid form data and includes language", async () => {
     const user = userEvent.setup();
     render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-    const destinationInput = screen.getByLabelText(/destination/i);
-    const daysInput = screen.getByLabelText(/number of days/i);
-    const activitiesInput = screen.getByLabelText(/activities/i);
-    const generateButton = screen.getByRole("button", {
-      name: /generate itinerary/i,
-    });
+    const destination = screen.getByLabelText(/destination/i);
+    const days = screen.getByRole("spinbutton", { name: /number of days/i });
+    const activities = screen.getByLabelText(/activities/i);
+    const submit = screen.getByRole("button", { name: /generate itinerary/i });
 
-    await user.clear(destinationInput);
-    await user.type(destinationInput, "Tokyo");
+    await user.clear(destination);
+    await user.type(destination, "Tokyo");
 
-    await user.click(daysInput);
+    await user.click(days);
     await user.keyboard("{Control>}a{/Control}");
     await user.keyboard("3");
 
-    await user.type(activitiesInput, "Temples and food");
-    await user.click(generateButton);
+    await user.type(activities, "Temples and food");
+    await user.click(submit);
 
     await waitFor(() => {
       expect(mockOnGenerate).toHaveBeenCalledWith({
@@ -106,27 +105,49 @@ describe("TripPlanningForm Component", () => {
     });
   });
 
-  it("shows loading state when isLoading is true", () => {
-    render(<TripPlanningForm onGenerate={mockOnGenerate} isLoading={true} />);
-
-    const generateButton = screen.getByRole("button");
-    expect(generateButton).toBeDisabled();
+  it("shows loading state when isLoading is true (button disabled)", () => {
+    render(<TripPlanningForm onGenerate={mockOnGenerate} isLoading />);
+    const btn = screen.getByRole("button", {
+      name: /generating|generate itinerary/i,
+    });
+    expect(btn).toBeDisabled();
   });
 
-  it("validates required fields", async () => {
+  it("prevents submission when required fields are empty", async () => {
     const user = userEvent.setup();
     render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-    const generateButton = screen.getByRole("button");
-    await user.click(generateButton);
+    const submit = screen.getByRole("button", { name: /generate itinerary/i });
+    await user.click(submit);
 
     expect(mockOnGenerate).not.toHaveBeenCalled();
   });
 
-  it("has correct form structure", () => {
+  it("marks fields as required and exposes placeholders", () => {
     render(<TripPlanningForm onGenerate={mockOnGenerate} />);
 
-    const form = screen.getByRole("form");
-    expect(form).toBeInTheDocument();
+    const destination = screen.getByLabelText(/destination/i);
+    const days = screen.getByRole("spinbutton", { name: /number of days/i });
+    const activities = screen.getByLabelText(/activities/i);
+
+    expect(destination).toBeRequired();
+    expect(days).toBeRequired();
+    expect(activities).toBeRequired();
+
+    const destinationInput = screen.getByLabelText(/destination/i);
+    const activitiesInput = screen.getByLabelText(/activities/i);
+    expect(destinationInput).toBeInTheDocument();
+    expect(activitiesInput).toBeInTheDocument();
+  });
+
+  it("exposes form landmark (named if aria-label is present)", () => {
+    render(<TripPlanningForm onGenerate={mockOnGenerate} />);
+    const namedForm = screen.queryByRole("form", { name: /trip planning/i });
+    if (namedForm) {
+      expect(namedForm).toBeInTheDocument();
+    } else {
+      const anyForm = screen.getByRole("form");
+      expect(anyForm).toBeInTheDocument();
+    }
   });
 });

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AppProviders } from "@/providers";
+import { AppProviders } from "@/providers/AppProviders";
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -16,7 +16,7 @@ interface AllTheProvidersProps {
 }
 
 export const AllTheProviders = ({ children }: AllTheProvidersProps) => {
-  const testQueryClient = createTestQueryClient();
+  const [testQueryClient] = useState(() => createTestQueryClient());
   return (
     <QueryClientProvider client={testQueryClient}>
       <AppProviders>{children}</AppProviders>

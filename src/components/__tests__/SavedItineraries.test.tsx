@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { render } from "@/test/utils/test-utils";
 import { SavedItineraries } from "../trip/SavedItineraries";
 
@@ -9,6 +10,9 @@ const mockProps = {
   onView: vi.fn(),
 };
 
+const nowIso = new Date().toISOString();
+const yesterdayIso = new Date(Date.now() - 86400000).toISOString();
+
 const mockItineraries = [
   {
     id: "1",
@@ -16,7 +20,7 @@ const mockItineraries = [
     days: 3,
     content: "Test itinerary 1",
     estimatedCost: 500,
-    createdAt: new Date().toISOString(),
+    createdAt: nowIso,
   },
   {
     id: "2",
@@ -24,7 +28,7 @@ const mockItineraries = [
     days: 5,
     content: "Test itinerary 2",
     estimatedCost: 800,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    createdAt: yesterdayIso,
   },
 ];
 
@@ -52,36 +56,77 @@ vi.mock("@/hooks/useToast", () => ({
   }),
 }));
 
-describe("SavedItineraries Component", () => {
+describe("SavedItineraries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders saved itineraries", () => {
+  it("renders saved itineraries as clickable cards", () => {
     render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
 
-    expect(screen.getByText("Paris")).toBeInTheDocument();
-    expect(screen.getByText("Tokyo")).toBeInTheDocument();
-    expect(screen.getByText("3 days")).toBeInTheDocument();
-    expect(screen.getByText("5 days")).toBeInTheDocument();
+    const cards = screen.getAllByRole("button", {
+      name: /view itinerary for/i,
+    });
+    expect(cards).toHaveLength(2);
+
+    expect(cards[0]).toHaveTextContent(/paris/i);
+    expect(cards[0]).toHaveTextContent(/3\s*days/i);
+    expect(cards[1]).toHaveTextContent(/tokyo/i);
+    expect(cards[1]).toHaveTextContent(/5\s*days/i);
   });
 
-  it("renders delete buttons for each itinerary", () => {
+  it("shows per-person costs on cards", () => {
     render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
 
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-    expect(deleteButtons).toHaveLength(2);
+    const cards = screen.getAllByRole("button", {
+      name: /view itinerary for/i,
+    });
+    expect(cards[0]).toHaveTextContent(/\$500\s*per person/i);
+    expect(cards[1]).toHaveTextContent(/\$800\s*per person/i);
   });
 
-  it("renders clear all button when there are itineraries", () => {
+  it("shows creation dates", () => {
+    render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
+    const dates = screen.getAllByText(/\d{1,2}[./-]\d{1,2}[./-]\d{4}/);
+    expect(dates.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("renders delete button for each itinerary and calls onDelete with the correct id", async () => {
+    const user = userEvent.setup();
     render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
 
-    expect(
-      screen.getByRole("button", { name: /clear all/i })
-    ).toBeInTheDocument();
+    const parisDelete = screen.getAllByRole("button", { name: /delete/i })[0];
+    await user.click(parisDelete);
+
+    expect(mockProps.onDelete).toHaveBeenCalledTimes(1);
+    expect(mockProps.onDelete).toHaveBeenCalledWith("1");
   });
 
-  it("does not render clear all button when no itineraries", () => {
+  it("calls onView with itinerary object when a card is activated", async () => {
+    const user = userEvent.setup();
+    render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
+
+    const parisCardBtn = screen.getByRole("button", {
+      name: /view itinerary for.*paris/i,
+    });
+    await user.click(parisCardBtn);
+
+    expect(mockProps.onView).toHaveBeenCalledTimes(1);
+    expect(mockProps.onView).toHaveBeenCalledWith(mockItineraries[0]);
+  });
+
+  it("renders 'Clear All' button when there are itineraries and triggers onClearAll", async () => {
+    const user = userEvent.setup();
+    render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
+
+    const clearBtn = screen.getByRole("button", { name: /clear all/i });
+    expect(clearBtn).toBeInTheDocument();
+
+    await user.click(clearBtn);
+    expect(mockProps.onClearAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render 'Clear All' when list is empty", () => {
     render(<SavedItineraries itineraries={[]} {...mockProps} />);
 
     expect(
@@ -89,24 +134,10 @@ describe("SavedItineraries Component", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows estimated costs", () => {
-    render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
-
-    expect(screen.getByText("$500 per person")).toBeInTheDocument();
-    expect(screen.getByText("$800 per person")).toBeInTheDocument();
-  });
-
-  it("shows creation dates", () => {
-    render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
-
-    const dates = screen.getAllByText(/\d{1,2}\.\d{1,2}\.\d{4}/);
-    expect(dates).toHaveLength(2);
-  });
-
-  it("handles missing data gracefully", () => {
-    const incompleteItineraries = [
+  it("handles missing data gracefully (cost=0, unknown date)", () => {
+    const incomplete = [
       {
-        id: "1",
+        id: "x",
         destination: "",
         days: 0,
         content: "",
@@ -114,19 +145,27 @@ describe("SavedItineraries Component", () => {
         createdAt: "",
       },
     ];
+    render(<SavedItineraries itineraries={incomplete} {...mockProps} />);
 
-    render(
-      <SavedItineraries itineraries={incompleteItineraries} {...mockProps} />
-    );
-
-    expect(screen.getByText("$0 per person")).toBeInTheDocument();
-    expect(screen.getByText("Unknown date")).toBeInTheDocument();
+    const card = screen.getByRole("button", { name: /view itinerary for/i });
+    expect(card).toHaveTextContent(/\$0\s*per person/i);
+    expect(card).toHaveTextContent(/unknown date/i);
   });
 
-  it("has correct semantic structure", () => {
+  it("supports keyboard activation for viewing (Enter/Space)", async () => {
+    const user = userEvent.setup();
     render(<SavedItineraries itineraries={mockItineraries} {...mockProps} />);
 
-    const sections = screen.getAllByRole("region");
-    expect(sections.length).toBeGreaterThan(0);
+    const cardBtn = screen.getByRole("button", {
+      name: /view itinerary for.*paris/i,
+    });
+    cardBtn.focus();
+    expect(cardBtn).toHaveFocus();
+
+    await user.keyboard("{Enter}");
+    expect(mockProps.onView).toHaveBeenCalledTimes(1);
+
+    await user.keyboard(" ");
+    expect(mockProps.onView).toHaveBeenCalledTimes(2);
   });
 });

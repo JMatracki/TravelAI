@@ -40,7 +40,6 @@ export const HomePage = () => {
   } = useSavedItineraries();
   const { scrollToElement } = useScrollToSection();
 
-  // Local state for currently displayed itinerary (either generated or viewed from saved)
   const [currentItinerary, setCurrentItinerary] = useState<Itinerary | null>(
     null
   );
@@ -48,7 +47,6 @@ export const HomePage = () => {
   const planSectionRef = useRef<HTMLDivElement>(null);
   const itinerarySectionRef = useRef<HTMLDivElement>(null);
 
-  // Update current itinerary when new one is generated
   useEffect(() => {
     if (data) {
       setCurrentItinerary(data);

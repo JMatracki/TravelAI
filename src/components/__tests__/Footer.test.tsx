@@ -23,27 +23,21 @@ vi.mock("@/hooks/useTheme", () => ({
 describe("Footer Component", () => {
   it("renders footer content", () => {
     render(<Footer />);
-
-    expect(screen.getByText("AI-Powered")).toBeInTheDocument();
-    expect(screen.getByText("Open Source")).toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
   });
 
-  it("has correct semantic structure", () => {
+  it("renders GitHub link with accessible name", () => {
     render(<Footer />);
-
-    const footer = screen.getByRole("contentinfo");
-    expect(footer).toBeInTheDocument();
+    const link = screen.getByRole("link");
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveTextContent("JMatracki");
   });
 
-  it("renders with correct classes", () => {
+  it("points to the correct URL and opens in a new tab safely", () => {
     render(<Footer />);
-
-    const footer = screen.getByRole("contentinfo");
-    expect(footer).toHaveClass(
-      "border-t",
-      "border-glass-border",
-      "bg-card/50",
-      "backdrop-blur-glass"
-    );
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("href", "https://github.com/JMatracki");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 });

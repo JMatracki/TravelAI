@@ -26,38 +26,48 @@ describe("Hero Component", () => {
     vi.clearAllMocks();
   });
 
-  it("renders hero title and subtitle", () => {
+  it("exposes a top-level heading for the section", () => {
     render(<Hero onGetStarted={mockOnGetStarted} />);
-
-    expect(
-      screen.getByText("Plan Your Perfect Journey with AI")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Create personalized travel itineraries")
-    ).toBeInTheDocument();
+    const h1 = screen.getByRole("heading", { level: 1 });
+    expect(h1).toBeInTheDocument();
   });
 
-  it("renders call-to-action button", () => {
+  it("provides a landmark region for the hero (aria-label)", () => {
     render(<Hero onGetStarted={mockOnGetStarted} />);
-
-    const ctaButton = screen.getByRole("button", { name: /start planning/i });
-    expect(ctaButton).toBeInTheDocument();
+    const region = screen.getByLabelText(/hero/i);
+    expect(region).toBeInTheDocument();
   });
 
-  it("calls onGetStarted when CTA button is clicked", async () => {
-    const user = userEvent.setup();
+  it("renders a CTA button with an accessible name", () => {
     render(<Hero onGetStarted={mockOnGetStarted} />);
+    const cta = screen.getByRole("button");
+    expect(cta).toBeInTheDocument();
+    expect(cta).toHaveAccessibleName();
+  });
 
-    const ctaButton = screen.getByRole("button", { name: /start planning/i });
-    await user.click(ctaButton);
-
+  it("invokes onGetStarted when CTA is activated via mouse", async () => {
+    render(<Hero onGetStarted={mockOnGetStarted} />);
+    const cta = screen.getByRole("button");
+    await userEvent.click(cta);
     expect(mockOnGetStarted).toHaveBeenCalledTimes(1);
   });
 
-  it("has correct semantic structure", () => {
+  it("is keyboard-accessible (Enter/Space activate the CTA)", async () => {
     render(<Hero onGetStarted={mockOnGetStarted} />);
+    const cta = screen.getByRole("button");
+    cta.focus();
+    expect(cta).toHaveFocus();
 
-    const heroSection = document.querySelector("section");
-    expect(heroSection).toBeInTheDocument();
+    await userEvent.keyboard("{Enter}");
+    expect(mockOnGetStarted).toHaveBeenCalledTimes(1);
+
+    await userEvent.keyboard(" ");
+    expect(mockOnGetStarted).toHaveBeenCalledTimes(2);
+  });
+
+  it("button is focusable in tab order", () => {
+    render(<Hero onGetStarted={mockOnGetStarted} />);
+    const cta = screen.getByRole("button");
+    expect(cta).toHaveProperty("tabIndex", 0);
   });
 });

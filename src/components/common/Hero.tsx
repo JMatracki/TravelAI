@@ -1,5 +1,5 @@
 import { ArrowRight, Sparkles } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "../ui/Button";
 import { useLanguage } from "@/hooks/useLanguage";
 import heroImage from "@/assets/images/hero-travel.jpg";
 
@@ -7,7 +7,10 @@ export const Hero = ({ onGetStarted }: { onGetStarted: () => void }) => {
   const { t } = useLanguage();
 
   return (
-    <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
+    <section
+      className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden"
+      aria-label="Hero"
+    >
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}

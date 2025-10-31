@@ -15,6 +15,8 @@ const mockItinerary = {
   createdAt: new Date().toISOString(),
 };
 
+const mockToast = vi.fn();
+
 vi.mock("@/hooks/useLanguage", () => ({
   useLanguage: () => ({
     t: {
@@ -39,7 +41,7 @@ vi.mock("@/hooks/useLanguage", () => ({
 
 vi.mock("@/hooks/useToast", () => ({
   useToast: () => ({
-    toast: vi.fn(),
+    toast: mockToast,
     toasts: [],
   }),
 }));
@@ -53,14 +55,12 @@ vi.mock("jspdf", () => ({
     addPage: vi.fn(),
     save: vi.fn(),
     internal: {
-      pageSize: {
-        height: 800,
-      },
+      pageSize: { height: 800 },
     },
   })),
 }));
 
-describe("ItineraryResults Component", () => {
+describe("ItineraryResults", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -68,63 +68,60 @@ describe("ItineraryResults Component", () => {
   it("renders itinerary information", () => {
     render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
 
-    expect(screen.getByText("Paris")).toBeInTheDocument();
-    expect(screen.getByText("$500")).toBeInTheDocument();
-    expect(screen.getByText("per person")).toBeInTheDocument();
+    const article = screen.getByRole("article");
+    expect(article).toHaveTextContent("Paris");
+    expect(article).toHaveTextContent("$500");
+    expect(article).toHaveTextContent("per person");
   });
 
-  it("renders itinerary content", () => {
+  it("renders markdown content from itinerary", () => {
     render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
-
     expect(screen.getByText(/Visit the Eiffel Tower/)).toBeInTheDocument();
     expect(screen.getByText(/Explore the Louvre/)).toBeInTheDocument();
   });
 
-  it("renders action buttons", () => {
+  it("renders action buttons with accessible names", () => {
     render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
 
     expect(
-      screen.getByRole("button", { name: /save this itinerary/i })
+      screen.getByRole("button", { name: /save.*itinerary/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /export itinerary as pdf/i })
+      screen.getByRole("button", { name: /export.*pdf/i })
     ).toBeInTheDocument();
   });
 
-  it("calls onSave when save button is clicked", async () => {
-    const user = userEvent.setup();
+  it("calls onSave when save button is clicked and shows saved state", async () => {
     render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
 
-    const saveButton = screen.getByRole("button", {
-      name: /save this itinerary/i,
-    });
-    await user.click(saveButton);
+    const saveButton = screen.getByRole("button", { name: /save.*itinerary/i });
+    await userEvent.click(saveButton);
 
     expect(mockOnSave).toHaveBeenCalledWith(mockItinerary);
-  });
-
-  it("shows saved state after saving", async () => {
-    const user = userEvent.setup();
-    render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
-
-    const saveButton = screen.getByRole("button", {
-      name: /save this itinerary/i,
-    });
-    await user.click(saveButton);
-
-    expect(screen.getByText("Saved!")).toBeInTheDocument();
+    expect(saveButton).toHaveTextContent(/saved/i);
   });
 
   it("handles PDF export", async () => {
-    const user = userEvent.setup();
     render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
 
-    const exportButton = screen.getByRole("button", {
-      name: /export itinerary as pdf/i,
-    });
-    await user.click(exportButton);
+    const exportButton = screen.getByRole("button", { name: /export.*pdf/i });
+    await userEvent.click(exportButton);
 
     expect(exportButton).toBeInTheDocument();
+  });
+
+  it("shows toast when save is clicked", async () => {
+    render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
+
+    const saveButton = screen.getByRole("button", { name: /save.*itinerary/i });
+    await userEvent.click(saveButton);
+
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Saved!",
+        description: expect.any(String),
+      })
+    );
   });
 
   it("handles missing itinerary data gracefully", () => {
@@ -141,14 +138,14 @@ describe("ItineraryResults Component", () => {
       <ItineraryResults itinerary={incompleteItinerary} onSave={mockOnSave} />
     );
 
-    expect(screen.getByText("$0")).toBeInTheDocument();
-    expect(screen.getByText("per person")).toBeInTheDocument();
+    const article = screen.getByRole("article");
+    expect(article).toHaveTextContent("$0");
+    expect(article).toHaveTextContent("per person");
   });
 
   it("has correct semantic structure", () => {
     render(<ItineraryResults itinerary={mockItinerary} onSave={mockOnSave} />);
-
-    const article = screen.getByRole("article");
-    expect(article).toBeInTheDocument();
+    const section = document.querySelector("section[role='article']");
+    expect(section).toBeInTheDocument();
   });
 });

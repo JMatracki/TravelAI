@@ -4,7 +4,6 @@ import { UI_CONFIG } from "@/lib/config/constants";
 export const useScrollToSection = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -15,7 +14,6 @@ export const useScrollToSection = () => {
 
   const scrollToElement = useCallback(
     (element: HTMLElement | null, delay = 0) => {
-      // Clear existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }

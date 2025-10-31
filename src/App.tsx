@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { AppProviders } from "@/providers";
+import { AppProviders } from "@/providers/AppProviders";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 
 const App = ({ children }: { children: ReactNode }) => {
